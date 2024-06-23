@@ -1,18 +1,19 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from "@mui/material";
 import { handleUpload } from "./upload-handler";
 import { useFormStatus, useFormState } from "react-dom";
 import { useEffect } from "react";
-import { useLocalStorage } from "../../hooks/useLocalStorage";
 interface Props {
   open: boolean;
   handleClose: () => void;
+  setPlanogramData: (data: Planogram[]) => void;
 }
 
-const initialState: { message: string; status: string; data?: Planogram[] | undefined } = {
+const initialState: { message: string; status: string; data?: string | undefined } = {
   message: "",
   status: "idle",
-  data: [],
+  data: "[]",
 };
 
 function UploadButton() {
@@ -24,16 +25,15 @@ function UploadButton() {
   );
 }
 
-export default function UploadDialog({ open, handleClose }: Props) {
+export default function UploadDialog({ open, handleClose, setPlanogramData }: Props) {
   const [state, formAction] = useFormState(handleUpload, initialState);
-  const [planogramData, setPlanogramData] = useLocalStorage<Planogram[]>("planogramData", []);
-  
+
   useEffect(() => {
     if (state?.status === "ok" && state.data) {
-      setPlanogramData(state.data);
+      setPlanogramData(JSON.parse(state.data));
       handleClose();
     }
-  }, [state, handleClose, setPlanogramData]);
+  }, [state]);
   return (
     <>
       <Dialog

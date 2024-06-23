@@ -1,4 +1,5 @@
 "use client";
+import { useState, useRef, useEffect, useMemo, useCallback, Suspense } from "react";
 import {
   Paper,
   Container,
@@ -13,67 +14,62 @@ import {
   Box,
   Typography,
 } from "@mui/material";
-
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { useLocalStorage } from "./hooks/useLocalStorage";
-
-interface item {
+import { useLocalStorage, useIsClient } from "usehooks-ts";
+interface Item {
   keycode: number;
   count: number;
 }
 
 export default function Home() {
   const [barcode, setBarcode] = useState<string>("");
-  const [items, setItems] = useLocalStorage<item[]>("scannedItems", []);
+  const [items, setItems] = useLocalStorage<Item[]>("scannedItems", []);
   const barcodeInput = useRef<HTMLInputElement>(null);
   const [planogramData] = useLocalStorage<Planogram[]>("planogramData", []);
-
   const [open, setOpen] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<number>(0);
+  const [currentKeycode, setCurrentKeycode] = useState<number | null>(null);
+  const isClient = useIsClient();
+
+  const handleClose = useCallback(() => setOpen(false), []);
+
   const handleOpen = useCallback(() => {
     setOpen(true);
-    setTimeout(handleClose, 5000);
-  }, []);
-  const handleClose = () => setOpen(false);
-
-  const [overlimitKeycode, setOverlimitKeycode] = useState<number | null>(null);
+    setTimeout(handleClose, 3000);
+  }, [handleClose]);
 
   const focusHandler = useCallback(() => {
     barcodeInput.current?.focus();
   }, []);
 
-  const controlLimit = useCallback(
-    (keycode: number, currentCount: number) => {
-      const item = planogramData.find((x) => x.KEYCODE === keycode);
-      if (item && item.FOH_QTY < currentCount) {
-        setOverlimitKeycode(keycode);
-        handleOpen();
-        return false;
-      }
-
-      return true;
-    },
-    [handleOpen, planogramData]
-  );
-
   const updateItems = useCallback(
     (keycode: number, amount: number) => {
+      setCurrentKeycode(keycode);
+      setSuccess(1); // Accepted by default
+
+      const pDefine = planogramData.find((x) => x.KEYCODE === keycode);
+      if (!pDefine) {
+        setSuccess(0); // Undefined
+      }
+
       const existingItemIndex = items.findIndex((x) => x.keycode === keycode);
       if (existingItemIndex !== -1) {
-        if (!controlLimit(keycode, items[existingItemIndex].count)) {
-          setSuccess(false);
+        // Check for limit if keycode is in planogram
+        if (pDefine && pDefine.FOH_QTY < items[existingItemIndex].count) {
+          setSuccess(2); // Over limit
+          handleOpen();
           return;
         }
+
         const updatedItems = [...items];
-        updatedItems[existingItemIndex].count = updatedItems[existingItemIndex].count + amount;
+        updatedItems[existingItemIndex].count += amount;
         setItems(updatedItems);
       } else {
         setItems((prev) => [...prev, { keycode, count: amount }]);
       }
-      setSuccess(true);
+
       handleOpen();
     },
-    [controlLimit, handleOpen, items, setItems]
+    [handleOpen, items, planogramData, setItems]
   );
 
   const barcodeInputHandler = useCallback(
@@ -105,72 +101,78 @@ export default function Home() {
     };
   }, [focusHandler, barcodeInputHandler]);
 
-  const tableRows = useMemo(
-    () =>
-      items.map((item: item, i: number) => {
-        const row = planogramData.find((p) => p.KEYCODE === item.keycode) || {
-          CURRENT_COUNT: item.count,
-          KEYCODE: item.keycode,
-          PRODUCT_DESCRIPTION: "",
-          DEPARTMENT_DESCRIPTION: "",
-          CLASS_DESCRIPTION: "",
-          SUB_CLASS_DESCRIPTION: "",
-          SUB_SUB_CLASS_DESCRIPTION: "",
-          DAY_DATE: "",
-          PLANOGRAM_UNITS: "",
-          SOH_QTY: 0,
-          FOH_QTY: 0,
-          BOH_QTY: 0,
-        };
-        return (
-          <TableRow
-            key={i}
-            sx={{
-              "&:last-child td, &:last-child th": { border: 0 },
-              backgroundColor: item.count > row.FOH_QTY ? (row.FOH_QTY === 0 ? "orange" : "red") : "",
-            }}
-          >
-            <TableCell component="td" scope="row">
-              {item.count}
-            </TableCell>
-            <TableCell component="td" scope="row">
-              {row.SOH_QTY}
-            </TableCell>
-            <TableCell component="td" scope="row">
-              {row.FOH_QTY}
-            </TableCell>
-            <TableCell component="td" scope="row">
-              {row.BOH_QTY}
-            </TableCell>
-            <TableCell component="td" scope="row">
-              {item.keycode}
-            </TableCell>
-            <TableCell component="td" scope="row">
-              {row.PRODUCT_DESCRIPTION}
-            </TableCell>
-            <TableCell component="td" scope="row">
-              {row.DEPARTMENT_DESCRIPTION}
-            </TableCell>
-            <TableCell component="td" scope="row">
-              {row.CLASS_DESCRIPTION}
-            </TableCell>
-            <TableCell component="td" scope="row">
-              {row.SUB_CLASS_DESCRIPTION}
-            </TableCell>
-            <TableCell component="td" scope="row">
-              {row.SUB_SUB_CLASS_DESCRIPTION}
-            </TableCell>
-            <TableCell component="td" scope="row">
-              {row.DAY_DATE}
-            </TableCell>
-            <TableCell component="td" scope="row">
-              {row.PLANOGRAM_UNITS}
-            </TableCell>
-          </TableRow>
-        );
-      }),
-    [items, planogramData]
-  );
+  const tableRows = useMemo(() => {
+    if (items.length === 0) {
+      return (
+        <TableRow>
+          <TableCell>No data</TableCell>
+        </TableRow>
+      );
+    }
+
+    return items.map((item: Item, i: number) => {
+      const row = planogramData.find((p) => p.KEYCODE === item.keycode) || {
+        CURRENT_COUNT: item.count,
+        KEYCODE: item.keycode,
+        PRODUCT_DESCRIPTION: "",
+        DEPARTMENT_DESCRIPTION: "",
+        CLASS_DESCRIPTION: "",
+        SUB_CLASS_DESCRIPTION: "",
+        SUB_SUB_CLASS_DESCRIPTION: "",
+        DAY_DATE: "",
+        PLANOGRAM_UNITS: "",
+        SOH_QTY: 0,
+        FOH_QTY: 0,
+        BOH_QTY: 0,
+      };
+      return (
+        <TableRow
+          key={i}
+          sx={{
+            "&:last-child td, &:last-child th": { border: 0 },
+            backgroundColor: item.count > row.FOH_QTY ? (row.FOH_QTY === 0 ? "orange" : "red") : "",
+          }}
+        >
+          <TableCell component="td" scope="row">
+            {item.count}
+          </TableCell>
+          <TableCell component="td" scope="row">
+            {row.SOH_QTY}
+          </TableCell>
+          <TableCell component="td" scope="row">
+            {row.FOH_QTY}
+          </TableCell>
+          <TableCell component="td" scope="row">
+            {row.BOH_QTY}
+          </TableCell>
+          <TableCell component="td" scope="row">
+            {item.keycode}
+          </TableCell>
+          <TableCell component="td" scope="row">
+            {row.PRODUCT_DESCRIPTION}
+          </TableCell>
+          <TableCell component="td" scope="row">
+            {row.DEPARTMENT_DESCRIPTION}
+          </TableCell>
+          <TableCell component="td" scope="row">
+            {row.CLASS_DESCRIPTION}
+          </TableCell>
+          <TableCell component="td" scope="row">
+            {row.SUB_CLASS_DESCRIPTION}
+          </TableCell>
+          <TableCell component="td" scope="row">
+            {row.SUB_SUB_CLASS_DESCRIPTION}
+          </TableCell>
+          <TableCell component="td" scope="row">
+            {row.DAY_DATE}
+          </TableCell>
+          <TableCell component="td" scope="row">
+            {row.PLANOGRAM_UNITS}
+          </TableCell>
+        </TableRow>
+      );
+    });
+  }, [items, planogramData]);
 
   const resultModal = useMemo(() => {
     const modalStyle = {
@@ -180,13 +182,53 @@ export default function Home() {
       transform: "translate(-50%, -50%)",
       width: "95vw",
       height: "95vh",
-      bgcolor: success ? "lime" : "red",
+      bgcolor: success === 0 ? "orange" : success === 1 ? "lime" : "red",
       border: "2px solid #000",
       boxShadow: 24,
       p: 4,
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
+    };
+
+    const renderModalContent = () => {
+      if (success === 1) {
+        return (
+          <>
+            <Typography id="modal-modal-title" variant="h1" component="h1" sx={{ textAlign: "center" }}>
+              ACCEPTED
+            </Typography>
+            <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h2" variant="h2">
+              Keycode : {currentKeycode}
+            </Typography>
+          </>
+        );
+      } else if (success === 2) {
+        return (
+          <>
+            <Typography id="modal-modal-title" variant="h1" component="h1" sx={{ textAlign: "center" }}>
+              OVER LIMIT
+            </Typography>
+            <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h3" variant="h3">
+              Accepted limit exceeded for keycode : {currentKeycode}
+            </Typography>
+            <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h2" variant="h2">
+              Please Put Red Sticker on Carton!
+            </Typography>
+          </>
+        );
+      } else {
+        return (
+          <>
+            <Typography id="modal-modal-title" variant="h1" component="h1" sx={{ textAlign: "center" }}>
+              UNDEFINED
+            </Typography>
+            <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h2" variant="h2">
+              Do not mark the carton!
+            </Typography>
+          </>
+        );
+      }
     };
 
     return (
@@ -196,31 +238,10 @@ export default function Home() {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        {success ? (
-          <Box sx={modalStyle}>
-            <Typography id="modal-modal-title" variant="h1" component="h1" sx={{ textAlign: "center" }}>
-              ACCEPTED
-            </Typography>
-            <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h2" variant="h2">
-              Keycode : {overlimitKeycode}
-            </Typography>
-          </Box>
-        ) : (
-          <Box sx={modalStyle}>
-            <Typography id="modal-modal-title" variant="h1" component="h1" sx={{ textAlign: "center" }}>
-              OVER LIMIT
-            </Typography>
-            <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h3" variant="h3">
-              Accepted limit exceeded for keycode : {overlimitKeycode}
-            </Typography>
-            <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h2" variant="h2">
-              Please Put Red Sticker on Carton
-            </Typography>
-          </Box>
-        )}
+        <Box sx={modalStyle}>{renderModalContent()}</Box>
       </Modal>
     );
-  }, [open, overlimitKeycode, success]);
+  }, [open, currentKeycode, success, handleClose]);
 
   return (
     <>
@@ -252,7 +273,7 @@ export default function Home() {
                 <TableCell>PLANOGRAM_UNITS</TableCell>
               </TableRow>
             </TableHead>
-            <TableBody>{tableRows}</TableBody>
+            <TableBody>{isClient ? tableRows : null}</TableBody>
           </Table>
         </TableContainer>
       </Container>

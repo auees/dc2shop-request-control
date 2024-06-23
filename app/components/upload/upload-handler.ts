@@ -24,7 +24,7 @@ export async function handleUpload(_: any, formData: FormData) {
   return {
     status: "ok",
     message: `File uploaded! ${data.file.name}`,
-    data: planogramData,
+    data: JSON.stringify(planogramData),
   };
 }
 

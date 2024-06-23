@@ -4,9 +4,8 @@ import UploadIcon from "@mui/icons-material/UploadOutlined";
 import { IconButton } from "@mui/material";
 import UploadDialog from "./upload-dialog";
 
-export default function Upload() {
+export default function Upload({ setPlanogramData }: { setPlanogramData: (data: Planogram[]) => void }) {
   const [open, setOpen] = useState(false);
-
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -20,7 +19,7 @@ export default function Upload() {
       <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }} onClick={handleClickOpen}>
         <UploadIcon />
       </IconButton>
-      <UploadDialog handleClose={handleClose} open={open} />
+      <UploadDialog handleClose={handleClose} open={open} setPlanogramData={setPlanogramData} />
     </>
   );
 }

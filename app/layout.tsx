@@ -4,7 +4,10 @@ import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
 
 import "./styles/globals.css";
-import TopBar from "./components/top-bar";
+import dynamic from "next/dynamic";
+const TopBar = dynamic(() => import("./components/top-bar"), {
+  ssr: false,
+});
 
 export const metadata: Metadata = {
   title: "Stock Controller",
