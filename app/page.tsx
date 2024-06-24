@@ -54,7 +54,7 @@ export default function Home() {
       const existingItemIndex = items.findIndex((x) => x.keycode === keycode);
       if (existingItemIndex !== -1) {
         // Check for limit if keycode is in planogram
-        if (pDefine && pDefine.PREDICTED_BOH_QTY =< items[existingItemIndex].count) {
+        if (pDefine && pDefine.PREDICTED_BOH_QTY <= items[existingItemIndex].count) {
           setSuccess(1); // Over limit
           handleOpen();
           return;
