@@ -44,17 +44,17 @@ export default function Home() {
   const updateItems = useCallback(
     (keycode: number, amount: number) => {
       setCurrentKeycode(keycode);
-      setSuccess(1); //don't mark
+      setSuccess(2); //mark
 
       const pDefine = planogramData.find((x) => x.KEYCODE === keycode);
+
+      if (!pDefine || pDefine.PREDICTED_BOH_QTY === 0) setSuccess(1);
+
       const existingItemIndex = items.findIndex((x) => x.keycode === keycode);
       if (existingItemIndex !== -1) {
         // Check for limit if keycode is in planogram
-        if (pDefine && pDefine.PREDICTED_BOH_QTY > 0 && pDefine.PREDICTED_BOH_QTY <= items[existingItemIndex].count) {
-          setSuccess(2); // mark
-          handleOpen();
-          return;
-        }
+        if (pDefine && pDefine.PREDICTED_BOH_QTY > 0 && pDefine.PREDICTED_BOH_QTY <= items[existingItemIndex].count)
+          setSuccess(1); // don't mark
 
         const updatedItems = [...items];
         updatedItems[existingItemIndex].count += amount;
