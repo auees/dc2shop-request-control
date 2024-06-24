@@ -9,6 +9,7 @@ declare interface Planogram {
   DAY_DATE: string;
   PLANOGRAM_UNITS: number;
   SOH_QTY: number;
-  FOH_QTY: number;
-  BOH_QTY: number;
+  PREDICTED_FOH_QTY: number;
+  PREDICTED_BOH_QTY: number;
+  PACK_SIZE:number;
 }

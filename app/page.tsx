@@ -54,7 +54,7 @@ export default function Home() {
       const existingItemIndex = items.findIndex((x) => x.keycode === keycode);
       if (existingItemIndex !== -1) {
         // Check for limit if keycode is in planogram
-        if (pDefine && pDefine.FOH_QTY < items[existingItemIndex].count) {
+        if (pDefine && pDefine.PREDICTED_BOH_QTY < items[existingItemIndex].count) {
           setSuccess(2); // Over limit
           handleOpen();
           return;
@@ -122,15 +122,15 @@ export default function Home() {
         DAY_DATE: "",
         PLANOGRAM_UNITS: "",
         SOH_QTY: 0,
-        FOH_QTY: 0,
-        BOH_QTY: 0,
+        PREDICTED_FOH_QTY: 0,
+        PREDICTED_BOH_QTY: 0,
       };
       return (
         <TableRow
           key={i}
           sx={{
             "&:last-child td, &:last-child th": { border: 0 },
-            backgroundColor: item.count > row.FOH_QTY ? (row.FOH_QTY === 0 ? "orange" : "red") : "",
+            backgroundColor: item.count > row.PREDICTED_BOH_QTY ? (row.PREDICTED_BOH_QTY === 0 ? "orange" : "red") : "",
           }}
         >
           <TableCell component="td" scope="row">
@@ -140,10 +140,10 @@ export default function Home() {
             {row.SOH_QTY}
           </TableCell>
           <TableCell component="td" scope="row">
-            {row.FOH_QTY}
+            {row.PREDICTED_FOH_QTY}
           </TableCell>
           <TableCell component="td" scope="row">
-            {row.BOH_QTY}
+            {row.PREDICTED_BOH_QTY}
           </TableCell>
           <TableCell component="td" scope="row">
             {item.keycode}
@@ -261,8 +261,8 @@ export default function Home() {
               <TableRow>
                 <TableCell>SCANNED</TableCell>
                 <TableCell>SOH_QTY</TableCell>
-                <TableCell>FOH_QTY</TableCell>
-                <TableCell>BOH_QTY</TableCell>
+                <TableCell>PREDICTED FOH_QTY</TableCell>
+                <TableCell>PREDICTED BOH_QTY</TableCell>
                 <TableCell>KEYCODE</TableCell>
                 <TableCell>PRODUCT_DESCRIPTION</TableCell>
                 <TableCell>DEPARTMENT_DESCRIPTION</TableCell>
