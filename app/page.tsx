@@ -44,18 +44,14 @@ export default function Home() {
   const updateItems = useCallback(
     (keycode: number, amount: number) => {
       setCurrentKeycode(keycode);
-      setSuccess(2); // Accepted by default
+      setSuccess(1); //don't mark
 
       const pDefine = planogramData.find((x) => x.KEYCODE === keycode);
-      // if (!pDefine) {
-      //   setSuccess(1); // accepted
-      // }
-
       const existingItemIndex = items.findIndex((x) => x.keycode === keycode);
       if (existingItemIndex !== -1) {
         // Check for limit if keycode is in planogram
-        if (pDefine && pDefine.PREDICTED_BOH_QTY > 0 && pDefine.PREDICTED_BOH_QTY <= items[existingItemIndex].count) {
-          setSuccess(1); // Over limit
+        if (pDefine && pDefine.PREDICTED_BOH_QTY > 0 && pDefine.PREDICTED_BOH_QTY >= items[existingItemIndex].count) {
+          setSuccess(2); // mark
           handleOpen();
           return;
         }
@@ -130,7 +126,6 @@ export default function Home() {
           key={i}
           sx={{
             "&:last-child td, &:last-child th": { border: 0 },
-            backgroundColor: item.count > row.PREDICTED_BOH_QTY ? (row.PREDICTED_BOH_QTY === 0 ? "orange" : "red") : "",
           }}
         >
           <TableCell component="td" scope="row">
@@ -183,7 +178,7 @@ export default function Home() {
       width: "95vw",
       height: "95vh",
       color: "#fff",
-      bgcolor: success === 0 ? "orange" : success === 1 ? "lime" : "red",
+      bgcolor: success === 1 ? "lime" : "red",
       border: "2px solid #000",
       boxShadow: 24,
       p: 4,
