@@ -44,7 +44,7 @@ export default function Home() {
   const updateItems = useCallback(
     (keycode: number, amount: number) => {
       setCurrentKeycode(keycode);
-      setSuccess(1); // Accepted by default
+      setSuccess(2); // Accepted by default
 
       const pDefine = planogramData.find((x) => x.KEYCODE === keycode);
       // if (!pDefine) {
@@ -54,8 +54,8 @@ export default function Home() {
       const existingItemIndex = items.findIndex((x) => x.keycode === keycode);
       if (existingItemIndex !== -1) {
         // Check for limit if keycode is in planogram
-        if (pDefine && pDefine.PREDICTED_BOH_QTY < items[existingItemIndex].count) {
-          setSuccess(2); // Over limit
+        if (pDefine && pDefine.PREDICTED_BOH_QTY =< items[existingItemIndex].count) {
+          setSuccess(1); // Over limit
           handleOpen();
           return;
         }
@@ -200,7 +200,7 @@ export default function Home() {
               MARK PRODUCT
             </Typography>
             <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h3" variant="h3">
-              Accepted limit exceeded for keycode : {currentKeycode}
+              Keycode : {currentKeycode}
             </Typography>
             <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h2" variant="h2">
               Please Put Red Sticker on Carton!
