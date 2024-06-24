@@ -47,9 +47,9 @@ export default function Home() {
       setSuccess(1); // Accepted by default
 
       const pDefine = planogramData.find((x) => x.KEYCODE === keycode);
-      if (!pDefine) {
-        setSuccess(0); // Undefined
-      }
+      // if (!pDefine) {
+      //   setSuccess(1); // accepted
+      // }
 
       const existingItemIndex = items.findIndex((x) => x.keycode === keycode);
       if (existingItemIndex !== -1) {
@@ -182,6 +182,7 @@ export default function Home() {
       transform: "translate(-50%, -50%)",
       width: "95vw",
       height: "95vh",
+      color: "#fff",
       bgcolor: success === 0 ? "orange" : success === 1 ? "lime" : "red",
       border: "2px solid #000",
       boxShadow: 24,
@@ -192,22 +193,11 @@ export default function Home() {
     };
 
     const renderModalContent = () => {
-      if (success === 1) {
+      if (success === 2) {
         return (
           <>
             <Typography id="modal-modal-title" variant="h1" component="h1" sx={{ textAlign: "center" }}>
-              ACCEPTED
-            </Typography>
-            <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h2" variant="h2">
-              Keycode : {currentKeycode}
-            </Typography>
-          </>
-        );
-      } else if (success === 2) {
-        return (
-          <>
-            <Typography id="modal-modal-title" variant="h1" component="h1" sx={{ textAlign: "center" }}>
-              OVER LIMIT
+              MARK PRODUCT
             </Typography>
             <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h3" variant="h3">
               Accepted limit exceeded for keycode : {currentKeycode}
@@ -221,10 +211,10 @@ export default function Home() {
         return (
           <>
             <Typography id="modal-modal-title" variant="h1" component="h1" sx={{ textAlign: "center" }}>
-              UNDEFINED
+              NO ACTION REQUIRED
             </Typography>
             <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h2" variant="h2">
-              Do not mark the carton!
+              Keycode : {currentKeycode}
             </Typography>
           </>
         );
