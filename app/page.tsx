@@ -15,6 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useLocalStorage, useIsClient } from "usehooks-ts";
+import dayjs from "dayjs";
 interface Item {
   keycode: number;
   count: number;
@@ -44,22 +45,30 @@ export default function Home() {
   const updateItems = useCallback(
     (keycode: number, amount: number) => {
       setCurrentKeycode(keycode);
-      setSuccess(2); //mark
+      setSuccess(1); //don't mark
 
       const pDefine = planogramData.find((x) => x.KEYCODE === keycode);
 
-      if (!pDefine || pDefine.PREDICTED_BOH_QTY === 0) setSuccess(1);
+      if (!pDefine) setSuccess(1); // don't mark send FOH
+
+      if (pDefine && pDefine.FOH_UNITS_TO_BE_FILLED === 0) setSuccess(2); //Mark
 
       const existingItemIndex = items.findIndex((x) => x.keycode === keycode);
       if (existingItemIndex !== -1) {
         // Check for limit if keycode is in planogram
-        if (pDefine && pDefine.PREDICTED_BOH_QTY > 0 && pDefine.PREDICTED_BOH_QTY <= items[existingItemIndex].count)
-          setSuccess(1); // don't mark
+        if (
+          pDefine &&
+          pDefine.FOH_UNITS_TO_BE_FILLED > 0 &&
+          pDefine.FOH_UNITS_TO_BE_FILLED <= items[existingItemIndex].count
+        )
+          setSuccess(2); // mark
 
         const updatedItems = [...items];
         updatedItems[existingItemIndex].count += amount;
         setItems(updatedItems);
       } else {
+        // if (pDefine && pDefine.FOH_UNITS_TO_BE_FILLED > 0 && pDefine.FOH_UNITS_TO_BE_FILLED <= amount) setSuccess(1); // don't mark
+
         setItems((prev) => [...prev, { keycode, count: amount }]);
       }
 
@@ -108,18 +117,10 @@ export default function Home() {
 
     return items.map((item: Item, i: number) => {
       const row = planogramData.find((p) => p.KEYCODE === item.keycode) || {
-        CURRENT_COUNT: item.count,
+        FOH_UNITS_TO_BE_FILLED: -1,
         KEYCODE: item.keycode,
-        PRODUCT_DESCRIPTION: "",
-        DEPARTMENT_DESCRIPTION: "",
-        CLASS_DESCRIPTION: "",
-        SUB_CLASS_DESCRIPTION: "",
-        SUB_SUB_CLASS_DESCRIPTION: "",
-        DAY_DATE: "",
-        PLANOGRAM_UNITS: "",
-        SOH_QTY: 0,
-        PREDICTED_FOH_QTY: 0,
-        PREDICTED_BOH_QTY: 0,
+        DATE_TO_BE_FILLED: new Date(),
+        STR_ID: "",
       };
       return (
         <TableRow
@@ -132,37 +133,13 @@ export default function Home() {
             {item.count}
           </TableCell>
           <TableCell component="td" scope="row">
-            {row.SOH_QTY}
-          </TableCell>
-          <TableCell component="td" scope="row">
-            {row.PREDICTED_FOH_QTY}
-          </TableCell>
-          <TableCell component="td" scope="row">
-            {row.PREDICTED_BOH_QTY}
+            {row.FOH_UNITS_TO_BE_FILLED}
           </TableCell>
           <TableCell component="td" scope="row">
             {item.keycode}
           </TableCell>
           <TableCell component="td" scope="row">
-            {row.PRODUCT_DESCRIPTION}
-          </TableCell>
-          <TableCell component="td" scope="row">
-            {row.DEPARTMENT_DESCRIPTION}
-          </TableCell>
-          <TableCell component="td" scope="row">
-            {row.CLASS_DESCRIPTION}
-          </TableCell>
-          <TableCell component="td" scope="row">
-            {row.SUB_CLASS_DESCRIPTION}
-          </TableCell>
-          <TableCell component="td" scope="row">
-            {row.SUB_SUB_CLASS_DESCRIPTION}
-          </TableCell>
-          <TableCell component="td" scope="row">
-            {row.DAY_DATE}
-          </TableCell>
-          <TableCell component="td" scope="row">
-            {row.PLANOGRAM_UNITS}
+            {dayjs(row.DATE_TO_BE_FILLED).format("DD/MM/YYYY")}
           </TableCell>
         </TableRow>
       );
@@ -198,7 +175,7 @@ export default function Home() {
               Keycode : {currentKeycode}
             </Typography>
             <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h2" variant="h2">
-              Please Put Red Sticker on Carton!
+              Please Put Red Tape on Carton!
             </Typography>
           </>
         );
@@ -245,17 +222,9 @@ export default function Home() {
             <TableHead>
               <TableRow>
                 <TableCell>SCANNED</TableCell>
-                <TableCell>SOH_QTY</TableCell>
-                <TableCell>PREDICTED FOH_QTY</TableCell>
-                <TableCell>PREDICTED BOH_QTY</TableCell>
+                <TableCell>FOH UNITS TO BE FILLED</TableCell>
                 <TableCell>KEYCODE</TableCell>
-                <TableCell>PRODUCT_DESCRIPTION</TableCell>
-                <TableCell>DEPARTMENT_DESCRIPTION</TableCell>
-                <TableCell>CLASS_DESCRIPTION</TableCell>
-                <TableCell>SUB_CLASS_DESCRIPTION</TableCell>
-                <TableCell>SUB_SUB_CLASS_DESCRIPTION</TableCell>
-                <TableCell>DAY_DATE</TableCell>
-                <TableCell>PLANOGRAM_UNITS</TableCell>
+                <TableCell>DATE TO BE FILLED</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>{isClient ? tableRows : null}</TableBody>

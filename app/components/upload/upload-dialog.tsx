@@ -8,6 +8,7 @@ interface Props {
   open: boolean;
   handleClose: () => void;
   setPlanogramData: (data: Planogram[]) => void;
+  setUpdateDate: (data: Date) => void;
 }
 
 const initialState: { message: string; status: string; data?: string | undefined } = {
@@ -25,12 +26,13 @@ function UploadButton() {
   );
 }
 
-export default function UploadDialog({ open, handleClose, setPlanogramData }: Props) {
+export default function UploadDialog({ open, handleClose, setPlanogramData, setUpdateDate }: Props) {
   const [state, formAction] = useFormState(handleUpload, initialState);
 
   useEffect(() => {
     if (state?.status === "ok" && state.data) {
       setPlanogramData(JSON.parse(state.data));
+      setUpdateDate(new Date());
       handleClose();
     }
   }, [state]);
