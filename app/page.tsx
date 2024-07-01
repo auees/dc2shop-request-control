@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useMemo, useCallback, Suspense } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
   Paper,
   Container,
@@ -67,8 +67,6 @@ export default function Home() {
         updatedItems[existingItemIndex].count += amount;
         setItems(updatedItems);
       } else {
-        // if (pDefine && pDefine.FOH_UNITS_TO_BE_FILLED > 0 && pDefine.FOH_UNITS_TO_BE_FILLED <= amount) setSuccess(1); // don't mark
-
         setItems((prev) => [...prev, { keycode, count: amount }]);
       }
 
@@ -80,6 +78,10 @@ export default function Home() {
   const barcodeInputHandler = useCallback(
     (event: KeyboardEvent) => {
       const key = event.key;
+      if (key === "Enter" && barcode.length < 98) {
+        setSuccess(1);
+        handleOpen();
+      }
 
       if (key === "Enter" && barcode.length >= 98) {
         const keycode = parseInt(barcode.slice(30, 38), 10);
@@ -92,7 +94,7 @@ export default function Home() {
         setBarcode((prevValue) => prevValue + key);
       }
     },
-    [barcode, updateItems]
+    [barcode, handleOpen, updateItems]
   );
 
   useEffect(() => {
@@ -185,9 +187,11 @@ export default function Home() {
             <Typography id="modal-modal-title" variant="h1" component="h1" sx={{ textAlign: "center" }}>
               NO ACTION REQUIRED
             </Typography>
-            <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h2" variant="h2">
-              Keycode : {currentKeycode}
-            </Typography>
+            {currentKeycode ? (
+              <Typography id="modal-modal-description" sx={{ mt: 2, textAlign: "center" }} component="h2" variant="h2">
+                Keycode : {currentKeycode}
+              </Typography>
+            ) : null}
           </>
         );
       }
@@ -214,7 +218,7 @@ export default function Home() {
           value={barcode}
           inputRef={barcodeInput}
           onBlur={() => barcodeInput.current?.focus()}
-          sx={{ display: "none" }}
+          sx={{ width: "100%" }}
         />
 
         <TableContainer component={Paper}>
